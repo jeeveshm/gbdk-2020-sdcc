@@ -127,7 +127,7 @@ jobs:
             echo "Patch sdcc: no file specified"
           elif [ "${{ inputs.sdcc_patch_file_url }}" = "repo" ]; then
             # Copy patches from gbdk-2020-sdcc repo into sdcc folder and apply them
-            cp gbdk-2020-sdcc/patches/* sdcc-${{ env.SDCC_VER }}
+            cp gbdk-2020-sdcc/Patches/* sdcc-${{ env.SDCC_VER }}
             cd sdcc-${{ env.SDCC_VER }}
             for file in $(ls -v *.patch); do echo "$file"; patch -p0 -f < "$file"; done
             cd ..         
