@@ -1,6 +1,6 @@
 Index: sdcc/sdas/linksrc/lkmain.c
 ===================================================================
---- sdcc/sdas/linksrc/lkmain.c	(revision 14581)
+--- sdcc/sdas/linksrc/lkmain.c	(revision 15614)
 +++ sdcc/sdas/linksrc/lkmain.c	(working copy)
 @@ -1490,8 +1490,14 @@
  #endif

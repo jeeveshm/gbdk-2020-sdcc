@@ -1,6 +1,6 @@
 Index: sdcc/sdas/linksrc/lkmem.c
 ===================================================================
---- sdcc/sdas/linksrc/lkmem.c	(revision 14068)
+--- sdcc/sdas/linksrc/lkmem.c	(revision 15614)
 +++ sdcc/sdas/linksrc/lkmem.c	(working copy)
 @@ -44,7 +44,8 @@
  

@@ -10,12 +10,12 @@ on:
   #   branches: [ develop ]
     inputs:
       sdcc_version_num:
-        description: 'SDCC Version Number (ex: 15267)'
-        default: '15267'
+        description: 'SDCC Version Number (ex: 15614)'
+        default: '15614'
         required: true
         type: string
       sdcc_patch_file_url:
-        description: 'url for sdcc patch file ("none" without quotes for none) (-p0, sdcc dir as root)'
+        description: 'url for sdcc patch file ("none" without quotes for none, "repo" to use patches/ dir in repo) (-p0, sdcc dir as root)'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.1.0-sdldz80-sms-virt-addr.patch'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_v2_merged-patches'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v3_combined-patches'
@@ -23,7 +23,8 @@ on:
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_no_overlay_locals_v6_combined.diff.patch'
         # (14635) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3.0-nes_banked_nonbanked_no_overlay_locals_v7_combined.diff.patch'
         # (14650) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3-nes_banked_nonbanked_no_overlay_locals_v8_combined.patch'
-        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/sdcc_15242__gbdk_4.4.0_patches_v10_individual.zip'
+        # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/sdcc_15242__gbdk_4.4.0_patches_v10_individual.zip'
+        default: 'repo'
         type: string        
 jobs:
   build:
@@ -100,6 +101,13 @@ jobs:
           sudo BINARY_PATH=/usr/i686-w64-mingw32/bin INCLUDE_PATH=/usr/i686-w64-mingw32/include LIBRARY_PATH=/usr/i686-w64-mingw32/lib make -f win32/Makefile.gcc install
           cd ..
 
+      # ==== Check out gbdk-2020-sdcc dir ====
+      - name: Check out gbdk-2020-sdcc
+        uses: actions/checkout@v4
+        with:
+          path: gbdk-2020-sdcc
+          submodules: false
+
       # ==== Download SDCC sources ====
       - name: Download SDCC Sources
         if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
@@ -111,14 +119,18 @@ jobs:
           # Apply patch file to source of applicable
           if [ "${{ inputs.sdcc_patch_file_url }}" = "none" ]; then
             echo "Patch sdcc: no file specified"
+          elif [ "${{ inputs.sdcc_patch_file_url }}" = "repo" ]; then
+            # Copy patches from gbdk-2020-sdcc repo into sdcc folder and apply them
+            cp gbdk-2020-sdcc/Patches/* sdcc-${{ env.SDCC_VER }}
+            cd sdcc-${{ env.SDCC_VER }}
+            for file in $(ls -v *.patch); do echo "$file"; patch -p0 -f < "$file"; done
+            cd ..         
           else
             echo "Patch sdcc: ${{ inputs.sdcc_patch_file_url }}"
-            # cd sdcc-${{ env.SDCC_VER }}/sdcc
             cd sdcc-${{ env.SDCC_VER }}
             curl -Lo gbdk-sdcc-patch-files.zip ${{ inputs.sdcc_patch_file_url }}
             unzip gbdk-sdcc-patch-files.zip
             for file in $(ls -v *.patch); do echo "$file"; patch -p0 -f < "$file"; done
-            # cd ../..
             cd ..
           fi   
 
@@ -170,7 +182,7 @@ jobs:
           if [ "${{ matrix.name }}" = "MacOS-x64" ]; then
             # Special case - use sdcc official build of cc1 since it has static linkage for libisl, libzstd (had some trouble with that on this build)
             # this will untar into libexec/sdcc/cc1
-            curl -Lo macos-cc1.tar.gz https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.5-macos-cc1-15224.tar.gz
+            curl -Lo macos-cc1.tar.gz https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.5.5-macos-cc1-15614.tar.gz
             tar xvfz macos-cc1.tar.gz
           else
             mv bin/cc1 libexec/sdcc

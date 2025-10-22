@@ -1,16 +1,21 @@
-diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502/gen.c ./sdcc/src/mos6502/gen.c
---- ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502/gen.c	2024-05-28 17:29:28.585759700 +0100
-+++ ./sdcc/src/mos6502/gen.c	2024-05-28 20:11:41.475759700 +0100
-@@ -80,6 +80,7 @@ static struct
+Index: sdcc/src/mos6502/gen.h
+===================================================================
+--- sdcc/src/mos6502/gen.h	(revision 15614)
++++ sdcc/src/mos6502/gen.h	(working copy)
+@@ -130,6 +130,7 @@
    int lastflag;
    struct attr_t tempAttr[NUM_TEMP_REGS];
    struct attr_t DPTRAttr[2];
 +  bool in_home;
- } _G;
+ };
  
- extern int m6502_ptrRegReq;
-@@ -180,6 +181,33 @@ safeLabelNum(symbol * a)
-   return 0;
+ // globals
+Index: sdcc/src/mos6502/gen.c
+===================================================================
+--- sdcc/src/mos6502/gen.c	(revision 15614)
++++ sdcc/src/mos6502/gen.c	(working copy)
+@@ -284,6 +284,33 @@
+   _S.lastflag=reg_idx;
  }
  
 +/* Duplicated from z80/gen.c */
@@ -30,20 +35,20 @@ diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502
 +     }
 +     else
 +     emit2("!area", CODE_NAME); */
-+  _G.in_home = inHome;
++  _S.in_home = inHome;
 +  //    }
 +}
 +
 +static bool
 +isInHome (void)
 +{
-+  return _G.in_home;
++  return _S.in_home;
 +}
 +
  /**************************************************************************
   * Returns the cycle count for the instruction
   *
-@@ -4575,6 +4603,69 @@ genSend (set *sendSet)
+@@ -4447,6 +4474,69 @@
      }
  }
  
@@ -113,12 +118,12 @@ diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502
  /**************************************************************************
   * genCall - generates a call statement
   *************************************************************************/
-@@ -4616,8 +4707,18 @@ genCall (iCode * ic)
-   } else {
-     bool jump = (!ic->parmBytes && IFFUNC_ISNORETURN (OP_SYMBOL (left)->type));
+@@ -4493,8 +4583,18 @@
+     {
+       bool jump = (!ic->parmBytes && IFFUNC_ISNORETURN (OP_SYMBOL (left)->type));
  
--    emit6502op (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
--                                             OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
+-      emit6502op (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
+-					       OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
 +      if (IFFUNC_ISBANKEDCALL (dtype) && !jump)
 +        {
 +          char *name = OP_SYMBOL (IC_LEFT (ic))->rname[0] ? OP_SYMBOL (IC_LEFT (ic))->rname : OP_SYMBOL (IC_LEFT (ic))->name;
@@ -131,10 +136,10 @@ diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502
 +          emit6502op (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
 +                                  OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
 +        }
-   }
+     }
  
-   m6502_dirtyReg (m6502_reg_a);
-@@ -4802,6 +4903,8 @@ static void genFunction (iCode * ic)
+   m6502_dirtyAllRegs ();
+@@ -4683,6 +4783,8 @@
    int stackAdjust = sym->stack;
    //  int accIsFree = sym->recvSize == 0;
  
@@ -143,7 +148,7 @@ diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502
    /* create the function header */
    emitComment (ALWAYS, "-----------------------------------------");
    emitComment (ALWAYS, " function %s", sym->name);
-@@ -4809,6 +4912,20 @@ static void genFunction (iCode * ic)
+@@ -4690,6 +4792,20 @@
    emitComment (ALWAYS, m6502_assignment_optimal ? "Register assignment is optimal." : "Register assignment might be sub-optimal.");
    emitComment (ALWAYS, "Stack space usage: %d bytes.", sym->stack);
  
@@ -164,7 +169,7 @@ diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502
    emitcode ("", "%s:", sym->rname);
    genLine.lineCurr->isLabel = 1;
    ftype = operandType (IC_LEFT (ic));
-@@ -10786,6 +10903,11 @@ genm6502Code (iCode *lic)
+@@ -8682,6 +8798,11 @@
    if (!options.nopeep)
      peepHole (&genLine.lineHead);
  
@@ -178,7 +183,7 @@ diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502
  
 Index: sdcc/src/mos6502/main.c
 ===================================================================
---- sdcc/src/mos6502/main.c	(revision 15224)
+--- sdcc/src/mos6502/main.c	(revision 15614)
 +++ sdcc/src/mos6502/main.c	(working copy)
 @@ -30,6 +30,7 @@
  #include "m6502.h"
@@ -345,7 +350,7 @@ Index: sdcc/src/mos6502/main.c
  }
  
  static void
-@@ -766,11 +905,11 @@
+@@ -768,11 +907,11 @@
      0,                          /* default ABI revision */
      {                           /* stack information */
        -1,                       /* stack grows down */
@@ -359,7 +364,7 @@ Index: sdcc/src/mos6502/main.c
        1,                        /* sp points to next free stack location */
      },
      {
-@@ -818,7 +957,7 @@
+@@ -820,7 +959,7 @@
      0,                          /* genInitStartup */
      m6502_reset_regparm,
      m6502_regparm,
@@ -368,7 +373,7 @@ Index: sdcc/src/mos6502/main.c
      NULL,                       /* getMangledFunctionName */
      _hasNativeMulFor,           /* hasNativeMulFor */
      hasExtBitOp,                /* hasExtBitOp */
-@@ -935,11 +1074,11 @@
+@@ -937,11 +1076,11 @@
      0,                          // ABI revision
      {
        -1,                       /* direction (-1 = stack grows down) */
@@ -382,7 +387,7 @@ Index: sdcc/src/mos6502/main.c
        1                         /* sp is offset by 1 from last item pushed */
      },
      {
-@@ -987,7 +1126,7 @@
+@@ -989,7 +1128,7 @@
      0,                          /* genInitStartup */
      m6502_reset_regparm,
      m6502_regparm,
@@ -391,10 +396,11 @@ Index: sdcc/src/mos6502/main.c
      NULL,                       /* getMangledFunctionName */
      _hasNativeMulFor,           /* hasNativeMulFor */
      hasExtBitOp,                /* hasExtBitOp */
-diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/SDCCglue.c ./sdcc/src/SDCCglue.c
---- ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/SDCCglue.c	2024-05-28 17:29:28.755759700 +0100
-+++ ./sdcc/src/SDCCglue.c	2024-05-28 20:24:49.135759700 +0100
-@@ -2164,7 +2164,7 @@ printPublics (FILE * afile)
+Index: sdcc/src/SDCCglue.c
+===================================================================
+--- sdcc/src/SDCCglue.c	(revision 15614)
++++ sdcc/src/SDCCglue.c	(working copy)
+@@ -2168,7 +2168,7 @@
  
    for (sym = setFirstItem (publics); sym; sym = setNextItem (publics))
      {
