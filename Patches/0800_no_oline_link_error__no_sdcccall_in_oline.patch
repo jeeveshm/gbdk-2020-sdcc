@@ -1,6 +1,6 @@
 Index: sdcc/sdas/linksrc/lkmain.c
 ===================================================================
---- sdcc/sdas/linksrc/lkmain.c	(revision 15224)
+--- sdcc/sdas/linksrc/lkmain.c	(revision 15614)
 +++ sdcc/sdas/linksrc/lkmain.c	(working copy)
 @@ -578,12 +578,13 @@
                          }
@@ -18,4 +18,3 @@ Index: sdcc/sdas/linksrc/lkmain.c
                                  }
                          }
                  }
-
