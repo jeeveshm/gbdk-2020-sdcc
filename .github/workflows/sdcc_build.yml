@@ -148,7 +148,7 @@ jobs:
 
       # ==== Build SDCC Linux / MacOS ====
       - name: Build SDCC Linux / MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'uconsole-r01') || (matrix.name == 'Linux-arm64') ||(matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') ||(matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
         shell: bash
         run: |    
           if [ "${{ matrix.name }}" = "MacOS-arm64" ]; then
