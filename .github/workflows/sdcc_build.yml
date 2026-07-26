@@ -205,37 +205,50 @@ jobs:
       # ==== Build SDCC WinCross 32 and 64 bit stages ====
       - name: Configure and Build SDCC
         run: |
-          # Check if we are building for the uConsole R01 target
+          # 1. Fetch the absolute source target snapshot archive cleanly
+          wget "https://sourceforge.net"
+          unzip -q sdcc-code-r15267-trunk.zip
+          
+          # 2. Hardcode the movement directly into the real extracted directory
+          cd sdcc-code-r15267-trunk/sdcc
+          
+          # 3. Safely run your hardware patch application loop
+          for patchfile in ../../Patches/*.patch; do patch -p0 < "$patchfile"; done
+          
+          # 4. Refresh the configuration builder scripts
+          autoconf
+          
+          # 5. Check your host platform to apply cross-compiling flags
           if [ "${{ matrix.target }}" = "linux-riscv64" ]; then
             CONF_FLAGS="--host=riscv64-linux-gnu --build=x86_64-linux-gnu"
           else
             CONF_FLAGS=""
           fi
 
-          # Execute the build with your optimized port exclusions
+          # 6. Execute the build engine with optimized target exclusions
           ./configure $CONF_FLAGS \
-          --enable-gbz80-port \
-          --enable-z80-port \
-          --disable-mcs51-port \
-          --disable-z180-port \
-          --disable-r2k-port \
-          --disable-r2ka-port \
-          --disable-r3ka-port \
-          --disable-tlcs90-port \
-          --disable-ez80_z80-port \
-          --disable-z80n-port \
-          --disable-ds390-port \
-          --disable-ds400-port \
-          --disable-pic14-port \
-          --disable-pic16-port \
-          --disable-hc08-port \
-          --disable-s08-port \
-          --disable-stm8-port \
-          --disable-pdk13-port \
-          --disable-pdk14-port \
-          --disable-pdk15-port \
-          --disable-ucsim \
-          --disable-doc
+            --enable-gbz80-port \
+            --enable-z80-port \
+            --disable-mcs51-port \
+            --disable-z180-port \
+            --disable-r2k-port \
+            --disable-r2ka-port \
+            --disable-r3ka-port \
+            --disable-tlcs90-port \
+            --disable-ez80_z80-port \
+            --disable-z80n-port \
+            --disable-ds390-port \
+            --disable-ds400-port \
+            --disable-pic14-port \
+            --disable-pic16-port \
+            --disable-hc08-port \
+            --disable-s08-port \
+            --disable-stm8-port \
+            --disable-pdk13-port \
+            --disable-pdk14-port \
+            --disable-pdk15-port \
+            --disable-ucsim \
+            --disable-doc
 
           make
 
