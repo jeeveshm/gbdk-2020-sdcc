@@ -205,26 +205,28 @@ jobs:
       # ==== Build SDCC WinCross 32 and 64 bit stages ====
       - name: Configure and Build SDCC
         run: |
-          # 1. Clone the clean SDCC source mirror from GitHub instead of using SourceForge
-          git clone --depth 1 --branch "sdcc-4.5.0" https://github.com sdcc-code-r15267-trunk
+          # 1. Download the pre-patched source tree bundle targeting the 15614 backport stream
+          wget -q "https://github.com"
+          unzip -q master.zip
           
-          # 2. Navigate straight into the cloned source folder matching your patch paths
-          cd sdcc-code-r15267-trunk/sdcc
+          # 2. Rename the extracted tree directory so it aligns with your project path variables
+          mv gbdk-2020-sdcc-master sdcc-code-r15614-trunk
+          cd sdcc-code-r15614-trunk/sdcc
           
-          # 3. Apply the custom GBDK hardware device target patches cleanly
+          # 3. Apply the custom hardware patches cleanly from your root directory
           for patchfile in ../../Patches/*.patch; do patch -p0 < "$patchfile"; done
           
-          # 4. Refresh configuration build macro files
+          # 4. Generate build scripts natively
           autoconf
           
-          # 5. Check your host platform to inject cross-compiling flags
+          # 5. Inject the RISC-V host variable rules if running for your uConsole target
           if [ "${{ matrix.target }}" = "linux-riscv64" ]; then
             CONF_FLAGS="--host=riscv64-linux-gnu --build=x86_64-linux-gnu"
           else
             CONF_FLAGS=""
           fi
 
-          # 6. Execute configure script with optimized port exclusions
+          # 6. Execute your optimized core microcontroller exclusions 
           ./configure $CONF_FLAGS \
             --enable-gbz80-port \
             --enable-z80-port \
@@ -249,10 +251,9 @@ jobs:
             --disable-ucsim \
             --disable-doc
 
-          # 7. Start the cross-compilation pipeline
+          # 7. Start cross-compiling
           make
-
-
+          
       - name: Build SDCC WinCross 32 Bit
         if: (matrix.name == 'Win32-On-Linux')
         shell: bash
