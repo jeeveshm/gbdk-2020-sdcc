@@ -69,12 +69,13 @@ jobs:
           # Packages (some may already be present)
           sudo apt-get install flex bison boost1.81-dev texinfo zlib1g zlib1g-dev
 
-      - name: Install Cross Compiler Build Dependencies
-        if: (matrix.name == 'uconsole-r01') || (matrix.name == 'linux-riscv64')
+      - name: Install Build Dependencies
         run: |
-          # SDCC build for riscv64
           sudo apt-get update
-          sudo apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu build-essential bison flex texinfo libboost-dev
+          sudo apt-get install -y build-essential bison flex texinfo libboost-dev toolame
+          if [ "${{ matrix.target }}" = "linux-riscv64" ]; then
+            sudo apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
+          fi
 
       - name: Install Dependencies MacOS 64
         if: (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
@@ -201,21 +202,42 @@ jobs:
           cd ../..
 
       # ==== Build SDCC WinCross 32 and 64 bit stages ====
-      - name: Configure and Cross-Compile SDCC
-        if: (matrix.name == 'uconsole-r01')
-        shell: bash
+      - name: Configure and Build SDCC
         run: |
-          cd sdcc
-          ./configure \
-            --host=riscv64-linux-gnu \
-            --build=x86_64-linux-gnu \
-            --enable-gbz80-port \
-            --enable-z80-port \
-            --disable-mcs51-port \
-            --disable-pic14-port \
-            --disable-pic16-port \
-            --disable-ucsim
+          # Check if we are building for the uConsole R01 target
+          if [ "${{ matrix.target }}" = "linux-riscv64" ]; then
+            CONF_FLAGS="--host=riscv64-linux-gnu --build=x86_64-linux-gnu"
+          else
+            CONF_FLAGS=""
+          fi
+
+          # Execute the build with your optimized port exclusions
+          ./configure $CONF_FLAGS \
+          --enable-gbz80-port \
+          --enable-z80-port \
+          --disable-mcs51-port \
+          --disable-z180-port \
+          --disable-r2k-port \
+          --disable-r2ka-port \
+          --disable-r3ka-port \
+          --disable-tlcs90-port \
+          --disable-ez80_z80-port \
+          --disable-z80n-port \
+          --disable-ds390-port \
+          --disable-ds400-port \
+          --disable-pic14-port \
+          --disable-pic16-port \
+          --disable-hc08-port \
+          --disable-s08-port \
+          --disable-stm8-port \
+          --disable-pdk13-port \
+          --disable-pdk14-port \
+          --disable-pdk15-port \
+          --disable-ucsim \
+          --disable-doc
+
           make
+
 
       - name: Build SDCC WinCross 32 Bit
         if: (matrix.name == 'Win32-On-Linux')
@@ -307,12 +329,12 @@ jobs:
           pwd
           ls -la
           
-      - name: Upload RISC-V64 Compiled Binary Asset
-        if: (matrix.name == 'uconsole-r01')
+      - name: Upload Compiled Toolchain
         uses: actions/upload-artifact@v4
         with:
-          name: sdcc-linux-riscv64
-          path: sdcc/bin/
+          name: sdcc-${{ matrix.name }}-binaries
+          path: bin/
+
 
       - name: Store build
         if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
