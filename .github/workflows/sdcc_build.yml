@@ -205,8 +205,8 @@ jobs:
       # ==== Build SDCC WinCross 32 and 64 bit stages ====
       - name: Configure and Build SDCC
         run: |
-          # 1. Fetch the absolute source target snapshot archive cleanly
-          wget "https://sourceforge.net"
+          # 1. Fetch the absolute source target archive passing a standard user-agent profile
+          wget --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" -q "https://sourceforge.net"
           unzip -q sdcc-code-r15267-trunk.zip
           
           # 2. Hardcode the movement directly into the real extracted directory
@@ -251,7 +251,6 @@ jobs:
             --disable-doc
 
           make
-
 
       - name: Build SDCC WinCross 32 Bit
         if: (matrix.name == 'Win32-On-Linux')
