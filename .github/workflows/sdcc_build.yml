@@ -205,12 +205,12 @@ jobs:
       # ==== Build SDCC WinCross 32 and 64 bit stages ====
       - name: Configure and Build SDCC
         run: |
-          # 1. Download the pre-patched source tree bundle targeting the 15614 backport stream
+          # 1. Download the pre-patched source tree bundle targeting the main backport stream
           wget -q "https://github.com"
-          unzip -q master.zip
+          unzip -q main.zip
           
-          # 2. Rename the extracted tree directory so it aligns with your project path variables
-          mv gbdk-2020-sdcc-master sdcc-code-r15614-trunk
+          # 2. Rename the extracted tree directory (main instead of master)
+          mv gbdk-2020-sdcc-main sdcc-code-r15614-trunk
           cd sdcc-code-r15614-trunk/sdcc
           
           # 3. Apply the custom hardware patches cleanly from your root directory
@@ -253,6 +253,7 @@ jobs:
 
           # 7. Start cross-compiling
           make
+
           
       - name: Build SDCC WinCross 32 Bit
         if: (matrix.name == 'Win32-On-Linux')
